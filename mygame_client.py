@@ -72,7 +72,8 @@ def get_action(name, keys, start_game=False):
     left = keys[pygame.K_LEFT] or keys[pygame.K_a]
     right = keys[pygame.K_RIGHT] or keys[pygame.K_d]
     jump = keys[pygame.K_UP] or keys[pygame.K_w] or keys[pygame.K_SPACE]
-    return Action(name, left, right, jump, start_game)
+    down = keys[pygame.K_DOWN] or keys[pygame.K_s]
+    return Action(name, left, right, jump, down, start_game)
 
 class Name_Textures: # class to generate and store textures of user names
 

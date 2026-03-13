@@ -11,6 +11,7 @@ class Player:
         self.speed = pygame.Vector2(0, 0)
         self.on_ground = False
         self.is_jumping_btn_held = False
+        self.drop_through = False
 
     def __repr__(self):
         return f"position: {self.position} speed: {self.speed}"
@@ -28,6 +29,11 @@ class Player:
         self.is_jumping_btn_held = action.is_jump()
         if self.is_jumping_btn_held and self.on_ground:
             self.speed.y = -12
+            self.on_ground = False
+
+        # Drop through platforms when holding down while on a platform
+        if action.is_down() and self.on_ground:
+            self.drop_through = True
             self.on_ground = False
 
     def update(self, platforms, world_size):
@@ -76,9 +82,13 @@ class Player:
             self.on_ground = True
             player_rect.y = int(self.position.y)
 
+        # If we pressed down while on a platform, allow falling through for one tick
+        drop_through = self.drop_through
+        self.drop_through = False
+
         for platform in platforms:
             if player_rect.colliderect(platform.rect):
-                if self.speed.y > 0 and prev_bottom <= platform.rect.top: # Falling down
+                if self.speed.y > 0 and prev_bottom <= platform.rect.top and not drop_through: # Falling down
                     player_rect.bottom = platform.rect.top
                     self.position.y = player_rect.y
                     self.speed.y = 0
