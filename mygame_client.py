@@ -21,6 +21,9 @@ def main(name, port, host):
     background_color = (0,0,0)
     name_textures = Name_Textures()
     game_state = None
+    started = False
+    font = pygame.font.SysFont('Comic Sans MS', 48)
+    small_font = pygame.font.SysFont('Comic Sans MS', 24)
     
     running = True
     while running:
@@ -28,13 +31,26 @@ def main(name, port, host):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-        
-        socket.send_pyobj(get_action(name, pygame.key.get_pressed())) # send action
-        if game_state:
-            game_state.draw(name,surface,name_textures) # draw while waiting for answer
-        game_state = socket.recv_pyobj() # receive game_state
-        #print("game_state:",game_state)        
-        
+            if not started and event.type == pygame.KEYDOWN:
+                started = True
+
+        if not started:
+            # Draw start screen
+            title = font.render('MyGame', False, (255, 255, 255))
+            prompt = small_font.render('Press Enter to start', False, (255, 255, 255))
+
+            title_rect = title.get_rect(center=(display.get_width() // 2, display.get_height() // 2 - 40))
+            prompt_rect = prompt.get_rect(center=(display.get_width() // 2, display.get_height() // 2 + 30))
+
+            surface.blit(title, title_rect)
+            surface.blit(prompt, prompt_rect)
+        else:
+            socket.send_pyobj(get_action(name, pygame.key.get_pressed())) # send action
+            if game_state:
+                game_state.draw(name,surface,name_textures) # draw while waiting for answer
+            game_state = socket.recv_pyobj() # receive game_state
+            #print("game_state:",game_state)        
+
         pygame.display.flip()
         clock.tick(60) # run at 60 frames per second
 
