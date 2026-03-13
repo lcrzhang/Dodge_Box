@@ -3,7 +3,7 @@ import random
 
 from Player import Player
 from Platform import Platform
-from Platform_jump import Platform_jump
+
 from Door import Door
 from Projectile import Projectile
 
@@ -86,7 +86,7 @@ class Game_State:
         
         for platform in self.platforms:
             platform.draw(surface)
-            
+
         for door in self.doors:
             door.draw(surface)
             
