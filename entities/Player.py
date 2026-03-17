@@ -4,6 +4,7 @@ class Player:
     width = 40
     height = 40
     color = (255, 255, 255)
+    max_health = 10
         
     def __init__(self, world_size, name):
         self.name = name
@@ -12,6 +13,7 @@ class Player:
         self.on_ground = False
         self.is_jumping_btn_held = False
         self.drop_through = False
+        self.health = Player.max_health
 
     def __repr__(self):
         return f"position: {self.position} speed: {self.speed}"
@@ -114,3 +116,6 @@ class Player:
         text_offset.x -= Player.width / 2
         text_offset.y += 10
         surface.blit(name_texture, self.position - text_offset)
+
+    def take_damage(self, amount=1):
+        self.health = max(0, self.health - amount)

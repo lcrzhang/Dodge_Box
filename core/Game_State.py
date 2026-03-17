@@ -120,12 +120,19 @@ class Game_State:
                 break
                 
         # Check projectile collisions
-        for proj in self.projectiles:
+        for proj in list(self.projectiles):
             if player_rect.colliderect(proj.get_rect()):
-                # Hit by a projectile: reset position
+                # Hit by a projectile: remove the projectile, deal damage and reset player position
+                try:
+                    self.projectiles.remove(proj)
+                except ValueError:
+                    pass
+                player.take_damage(1)
+                # small respawn to avoid immediate repeated hits
                 player.position.x = self.world_size.x // 2
                 player.position.y = 50
                 player.speed.y = 0
+                break
 
     def spawn_units(self):
         """Called regularly by server tick; update timers, projectiles and warnings."""
@@ -221,6 +228,44 @@ class Game_State:
             x = surface.get_width() - txt_surf.get_width() - margin
             y = margin
             surface.blit(txt_surf, (x, y))
+        except Exception:
+            pass
+
+        # ── Health hearts (top-right, below level counter) ───────────────────
+        try:
+            if name in self.players:
+                p = self.players[name]
+                hearts_total = Player.max_health
+                hearts_current = getattr(p, "health", hearts_total)
+
+                # heart drawing helper
+                def _draw_heart(surf, cx, cy, size, color=(220, 30, 30)):
+                    r = size // 4
+                    # two circles
+                    pygame.draw.circle(surf, color, (int(cx - r), int(cy - r)), r)
+                    pygame.draw.circle(surf, color, (int(cx + r), int(cy - r)), r)
+                    # bottom triangle / polygon
+                    points = [
+                        (int(cx - size // 2), int(cy - r)),
+                        (int(cx + size // 2), int(cy - r)),
+                        (int(cx), int(cy + size // 2))
+                    ]
+                    pygame.draw.polygon(surf, color, points)
+
+                heart_size = 14
+                gap = 6
+                # start drawing under the level text
+                start_x = surface.get_width() - margin
+                start_y = y + txt_surf.get_height() + 8
+                # draw hearts right-to-left
+                for i in range(hearts_total):
+                    hx = start_x - (i * (heart_size + gap)) - heart_size
+                    hy = start_y
+                    if i < hearts_current:
+                        _draw_heart(surface, hx + heart_size/2, hy + heart_size/2, heart_size, (220,30,30))
+                    else:
+                        # draw dimmed heart
+                        _draw_heart(surface, hx + heart_size/2, hy + heart_size/2, heart_size, (80,80,80))
         except Exception:
             pass
 
