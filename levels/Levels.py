@@ -9,6 +9,7 @@ Level(
     platforms = [(x, y, width, height), ...],
     door      = (x, y),          # top-left corner of the exit door
     spawn     = (x, y),          # player spawn position
+    world_size=(800, 600),       # optional: size of the level (width, height)
     modifiers = PlayerModifiers(...),  # optional: override player physics
 )
 
@@ -81,6 +82,9 @@ class Level:
 
     # Per-level player physics modifiers
     modifiers:  PlayerModifiers = field(default_factory=PlayerModifiers)
+    
+    # Size of the level surface
+    world_size: Tuple[int, int] = (800, 600)
 
 
 # ---------------------------------------------------------------------------
@@ -130,10 +134,20 @@ LEVEL_2 = Level(
 )
 
 # Add your own levels here ↓
-# LEVEL_3 = Level(
-#     platforms=[...],
-#     door=(...),
-#     spawn=(...),
-# )
+LEVEL_3 = Level(
+    platforms=[
+        (0,   1160, 1600, 40),  # extra wide and deep floor
+        (100, 1000, 150,  20),
+        (350, 850,  150,  20),
+        (600, 700,  150,  20),
+        (900, 550,  200,  20),
+        (1200,400,  150,  20),
+    ],
+    door=(1400, 320),
+    spawn=(50, 1115),
+    background=(20, 50, 20),    # dark green
+    theme="forest",
+    world_size=(1600, 1200),    # 2x width, 2x height
+)
 
-LEVELS = [LEVEL_1, LEVEL_2]
+LEVELS = [LEVEL_1, LEVEL_2, LEVEL_3]

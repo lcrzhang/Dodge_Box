@@ -17,7 +17,11 @@ def main(name, port, host):
     display = pygame.display.set_mode((800, 600), pygame.RESIZABLE)
     pygame.display.set_caption('mygame')
     surface = pygame.display.get_surface()
-    game_surface = pygame.Surface((800, 600))  # fixed internal render target
+    
+    # Internal render target dimensions (will adjust to current level's world bounds)
+    game_w, game_h = 800, 600
+    game_surface = pygame.Surface((game_w, game_h))
+    
     clock = pygame.time.Clock()
     background_color = (0,0,0)
     background_cache = {}   # cache loaded background images (store original surfaces)
@@ -38,7 +42,14 @@ def main(name, port, host):
                 started = True
                 just_started = True
 
-        # Always render to a fixed 800x600 surface, then scale to the current window size.
+        # Update internal resolution if we have a game_state with a larger/different world
+        if game_state:
+            gw, gh = int(game_state.world_size.x), int(game_state.world_size.y)
+            if gw != game_w or gh != game_h:
+                game_w, game_h = gw, gh
+                game_surface = pygame.Surface((game_w, game_h))
+
+        # Always render to the internal surface, then scale to the current window size.
         # This preserves aspect ratio and avoids stretching when the window is resized.
         game_surface.fill(background_color)
 
@@ -47,8 +58,8 @@ def main(name, port, host):
             title = font.render('MyGame', False, (255, 255, 255))
             prompt = small_font.render('Press Enter to start', False, (255, 255, 255))
 
-            title_rect = title.get_rect(center=(800 // 2, 600 // 2 - 40))
-            prompt_rect = prompt.get_rect(center=(800 // 2, 600 // 2 + 30))
+            title_rect = title.get_rect(center=(game_w // 2, game_h // 2 - 40))
+            prompt_rect = prompt.get_rect(center=(game_w // 2, game_h // 2 + 30))
 
             game_surface.blit(title, title_rect)
             game_surface.blit(prompt, prompt_rect)
@@ -70,7 +81,7 @@ def main(name, port, host):
                         if lvl_bg not in background_cache:
                             background_cache[lvl_bg] = pygame.image.load(lvl_bg).convert()
                         bg_orig = background_cache[lvl_bg]
-                        bg_scaled = pygame.transform.scale(bg_orig, (800, 600))
+                        bg_scaled = pygame.transform.scale(bg_orig, (game_w, game_h))
                         game_surface.blit(bg_scaled, (0, 0))
                     except Exception:
                         game_surface.fill(background_color)
@@ -85,7 +96,7 @@ def main(name, port, host):
                 seconds = int(game_state.timer) % 60
                 time_str = f"{minutes:02d}:{seconds:02d}"
                 time_text = font.render(time_str, False, (255, 255, 255))
-                time_rect = time_text.get_rect(midtop=(800 // 2, 10))
+                time_rect = time_text.get_rect(midtop=(game_w // 2, 10))
                 game_surface.blit(time_text, time_rect)
             else:
                 # no game state yet — clear to default
@@ -94,11 +105,11 @@ def main(name, port, host):
             game_state = socket.recv_pyobj() # receive game_state
             #print("game_state:",game_state)        
 
-        # Scale the fixed 800x600 game surface to the window size with aspect ratio preserved.
+        # Scale the internal game surface to the window size with aspect ratio preserved.
         win_w, win_h = display.get_size()
-        scale = min(win_w / 800, win_h / 600)
-        scaled_w = int(800 * scale)
-        scaled_h = int(600 * scale)
+        scale = min(win_w / game_w, win_h / game_h)
+        scaled_w = int(game_w * scale)
+        scaled_h = int(game_h * scale)
         scaled = pygame.transform.smoothscale(game_surface, (scaled_w, scaled_h))
 
         # Center the scaled view w/ letterboxing/pillarboxing
