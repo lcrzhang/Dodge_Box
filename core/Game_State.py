@@ -127,10 +127,11 @@ class Game_State:
                 speed_y = random.uniform(1, 4)
 
             self.warnings.append(ProjectileWarning(
-                spawn_pos    = (x, y),
-                base_speed   = (speed_x, speed_y),
-                size         = size,
-                warning_time = diff.warning_time,
+                spawn_pos         = (x, y),
+                base_speed        = (speed_x, speed_y),
+                size              = size,
+                warning_time      = diff.warning_time,
+                projectile_images = getattr(self.current_level, "projectile_images", None),
             ))
 
         # ── Promote expired warnings to real projectiles ──────────────────────
