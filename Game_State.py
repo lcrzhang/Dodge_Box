@@ -43,6 +43,7 @@ class Game_State:
         # Do NOT create the door immediately — spawn it only after the timer runs out
         self.doors = []
         self.projectiles = []
+        self.current_modifiers = level.modifiers  # <-- store per-level physics
 
         # Remember the current level data so we can spawn the door later
         self.current_level = level
@@ -91,8 +92,8 @@ class Game_State:
 
         player = self.players[name]
         
-        player.apply_action(action)
-        player.update(self.platforms, self.world_size)
+        player.apply_action(action, self.current_modifiers)
+        player.update(self.platforms, self.world_size, self.current_modifiers)
         
         # Check door collisions
         player_rect = pygame.Rect(player.position.x, player.position.y, Player.width, Player.height)
