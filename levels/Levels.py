@@ -80,6 +80,10 @@ class Level:
     background: Optional[Union[Tuple[int, int, int], str]] = None
     theme:      Optional[str] = None   # e.g. "cave", "space", "forest"
 
+    # Optional list of image file paths to use as projectile sprites for this level.
+    # If None or empty the Projectile class falls back to coloured shapes.
+    projectile_images: Optional[List[str]] = None
+
     # Per-level player physics modifiers
     modifiers:  PlayerModifiers = field(default_factory=PlayerModifiers)
     
@@ -103,8 +107,15 @@ LEVEL_1 = Level(
     ],
     door=(740, 480),
     spawn=(20, 515),
-    background="images/level1_bg.png",   # use the exact image filename in the images/ folder
+    background="images/Level1/level1_bg.png",
     theme="default",
+    projectile_images=[
+        "images/Level1/space_invader_1.png",
+        "images/Level1/space_invader_2.png",
+        "images/Level1/space_invader_3.png",
+        "images/Level1/space_invader_4.png",
+        "images/Level1/space_invader_5.png",
+    ],
 )
 
 LEVEL_2 = Level(
