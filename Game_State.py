@@ -44,9 +44,10 @@ class Game_State:
         # Remember the current level data so we can spawn the door later
         self.current_level = level
 
-        # Reset and start the countdown at 3 minutes (180 seconds)
-        self.timer = 180.0
-        self.timer_started = True
+        # Reset the countdown at 1 minute (60 seconds) but DO NOT start it here.
+        # Timer will start when the first player enters the level.
+        self.timer = 60.0
+        self.timer_started = False
 
         # Teleport all existing players to the spawn point
         spawn_x, spawn_y = level.spawn
@@ -77,6 +78,10 @@ class Game_State:
             player = Player(self.world_size, name) # create a new player
             self.units.append(player)              # add to units
             self.players[name] = player            # add to players too for fast lookup by name 
+            # Start the level timer when the first player enters this level
+            if not self.timer_started and len(self.units) == 1:
+                self.timer_started = True
+
         player = self.players[name]
         
         player.apply_action(action)
