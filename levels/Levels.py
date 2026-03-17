@@ -79,6 +79,8 @@ class Level:
     #             None      → default black
     background: Optional[Union[Tuple[int, int, int], str]] = None
     theme:      Optional[str] = None   # e.g. "cave", "space", "forest"
+    name:       str = "Unknown Level"  # display name for the map
+
 
     # Optional list of image file paths to use as projectile sprites for this level.
     # If None or empty the Projectile class falls back to coloured shapes.
@@ -96,6 +98,7 @@ class Level:
 # ---------------------------------------------------------------------------
 
 LEVEL_1 = Level(
+    name="The Beginning",
     platforms=[
         # Ground
         (0,   560, 800, 40),
@@ -119,6 +122,7 @@ LEVEL_1 = Level(
 )
 
 LEVEL_2 = Level(
+    name="Red Cave",
     platforms=[
         # Ground
         (0,   560, 800, 40),
@@ -146,6 +150,7 @@ LEVEL_2 = Level(
 
 # Add your own levels here ↓
 LEVEL_3 = Level(
+    name="Forest High",
     platforms=[
         (0,   1160, 1600, 40),  # extra wide and deep floor
         (100, 1000, 150,  20),
