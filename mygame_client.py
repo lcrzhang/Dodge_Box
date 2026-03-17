@@ -20,7 +20,7 @@ def main(name, port, host):
     clock = pygame.time.Clock()
     background_color = (0,0,0)
     background_cache = {}   # cache loaded background images (store original surfaces)
-    background_image = None
+    background_image = None 
     name_textures = Name_Textures()
     game_state = None
     started = False
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     port = 2345
     host = "127.0.0.1"
     if len(sys.argv) > 1:
-        name = sys.argv[1]
+        name = sys.argv[1][:20]
     if len(sys.argv) > 2:
         port = int(sys.argv[2])
     if len(sys.argv) > 3:
