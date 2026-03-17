@@ -195,6 +195,21 @@ class Game_State:
         if self.active_modifier is not None:
             self._draw_modifier_badge(surface, self.active_modifier)
 
+        # ── Level counter HUD ───────────────────────────────────────────────
+        try:
+            if getattr(self, "in_welcome", False) or getattr(self, "current_level", None) is None:
+                level_label = "Level: -"
+            else:
+                # show human-friendly 1-based level number
+                level_label = f"Level: {self.current_level_index + 1}"
+            font_level = pygame.font.SysFont("Comic Sans MS", 20)
+            level_surf = font_level.render(level_label, True, (255, 255, 255))
+            level_rect = level_surf.get_rect(topright=(surface.get_width() - 10, 10))
+            surface.blit(level_surf, level_rect)
+        except Exception:
+            # don't crash drawing if fonts/surface unavailable
+            pass
+
     def _draw_modifier_badge(self, surface, modifier):
         """Draw a small coloured badge in the top-left corner showing the active modifier."""
         padding   = 8

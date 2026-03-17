@@ -56,7 +56,7 @@ def main(name, port, host):
         if not started:
             # Draw start screen
             title = font.render('MyGame', False, (255, 255, 255))
-            prompt = small_font.render('Press Enter to start', False, (255, 255, 255))
+            prompt = small_font.render('Press any key to start', False, (255, 255, 255))
 
             title_rect = title.get_rect(center=(game_w // 2, game_h // 2 - 40))
             prompt_rect = prompt.get_rect(center=(game_w // 2, game_h // 2 + 30))
