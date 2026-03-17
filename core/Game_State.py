@@ -191,12 +191,49 @@ class Game_State:
         for unit in self.units:
             unit.draw(surface, name_textures)
 
-        # ── Active modifier HUD badge ─────────────────────────────────────────
-        if self.active_modifier is not None:
-            self._draw_modifier_badge(surface, self.active_modifier)
+        # ── Level Name Popup and Modifier HUD badge ───────────────────────────
+        # Fading logic: show fully for 2 seconds, fade out over 1.5 seconds
+        time_elapsed = 60.0 - self.timer
+        if time_elapsed < 2.0:
+            fade_alpha = 255
+        elif time_elapsed < 3.5:
+            fade_alpha = int(255 * (1.0 - (time_elapsed - 2.0) / 1.5))
+        else:
+            fade_alpha = 0
 
-    def _draw_modifier_badge(self, surface, modifier):
+        if getattr(self, "current_level", None) and fade_alpha > 0:
+            self._draw_level_name_popup(surface, self.current_level.name, fade_alpha)
+
+        if self.active_modifier is not None and fade_alpha > 0:
+            self._draw_modifier_badge(surface, self.active_modifier, fade_alpha)
+
+    def _draw_level_name_popup(self, surface, name, fade_alpha=255):
+        if fade_alpha <= 0: return
+
+        font = pygame.font.SysFont("Comic Sans MS", 36, bold=True)
+        text_surf = font.render(name, True, (255, 255, 255))
+        
+        padding = 20
+        popup_w = text_surf.get_width() + padding * 2
+        popup_h = text_surf.get_height() + padding * 2
+        
+        popup_surf = pygame.Surface((popup_w, popup_h), pygame.SRCALPHA)
+        popup_surf.fill((0, 0, 0, 180)) # Dark semitransparent background
+        pygame.draw.rect(popup_surf, (255, 255, 255), popup_surf.get_rect(), 2) # White border
+        
+        popup_surf.blit(text_surf, (padding, padding))
+        
+        if fade_alpha < 255:
+            popup_surf.set_alpha(fade_alpha)
+            
+        x = (surface.get_width() - popup_w) // 2
+        y = 40
+        surface.blit(popup_surf, (x, y))
+
+    def _draw_modifier_badge(self, surface, modifier, fade_alpha=255):
         """Draw a small coloured badge in the top-left corner showing the active modifier."""
+        if fade_alpha <= 0: return
+        
         padding   = 8
         badge_x   = 10
         badge_y   = 10
@@ -210,16 +247,17 @@ class Game_State:
         badge_w = max(label_surf.get_width(), desc_surf.get_width()) + padding * 2
         badge_h = label_surf.get_height() + desc_surf.get_height() + padding * 2 + 4
 
-        badge_rect = pygame.Rect(badge_x, badge_y, badge_w, badge_h)
-
-        # Background fill with the modifier's colour
-        bg_surf = pygame.Surface((badge_w, badge_h), pygame.SRCALPHA)
-        bg_surf.fill((*modifier.color, 200))  # semi-transparent
-        surface.blit(bg_surf, (badge_x, badge_y))
-
+        badge_surf = pygame.Surface((badge_w, badge_h), pygame.SRCALPHA)
+        # Background fill with the modifier's colour (keep at 200/255 opacity max for readability)
+        badge_surf.fill((*modifier.color, 200))
         # Thin white border
-        pygame.draw.rect(surface, (255, 255, 255), badge_rect, 1)
+        pygame.draw.rect(badge_surf, (255, 255, 255), badge_surf.get_rect(), 1)
 
         # Text
-        surface.blit(label_surf, (badge_x + padding, badge_y + padding))
-        surface.blit(desc_surf,  (badge_x + padding, badge_y + padding + label_surf.get_height() + 4))
+        badge_surf.blit(label_surf, (padding, padding))
+        badge_surf.blit(desc_surf,  (padding, padding + label_surf.get_height() + 4))
+
+        if fade_alpha < 255:
+            badge_surf.set_alpha(fade_alpha)
+
+        surface.blit(badge_surf, (badge_x, badge_y))
