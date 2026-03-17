@@ -1,6 +1,7 @@
 import sys
 import zmq
 import pygame
+import os
 
 from Action import Action
 from Game_State import Game_State
@@ -20,9 +21,12 @@ def main(name, port, host):
     clock = pygame.time.Clock()
     background_color = (0,0,0)
     background_cache = {}   # cache loaded background images (store original surfaces)
-    background_image = None
     name_textures = Name_Textures()
     game_state = None
+    prev_game_state = None
+    # create sound manager (expects a 'sounds' folder next to the project files)
+    from SoundManager import SoundManager
+    sound = SoundManager()  # will auto-load SFX in ./sounds
     started = False
     just_started = False
     font = pygame.font.SysFont('Comic Sans MS', 48)
@@ -86,8 +90,32 @@ def main(name, port, host):
             else:
                 # no game state yet — clear to default
                 surface.fill(background_color)
- 
-            game_state = socket.recv_pyobj() # receive game_state
+
+            # Receive new game_state from server (blocking until reply)
+            try:
+                new_state = socket.recv_pyobj()
+            except Exception:
+                running = False
+                new_state = None
+
+            # Play background music for the level if available:
+            if new_state is not None:
+                try:
+                    lvl_idx = int(new_state.current_level_index)
+                    # convention: sounds/level1_bgm.ogg, level2_bgm.ogg ...
+                    music_path = os.path.join("sounds", f"level{lvl_idx+1}_bgm.ogg")
+                    sound.play_music(music_path, loops=-1, volume=0.4)
+                except Exception:
+                    pass
+
+                # play door-open SFX when doors appear (detect edge from prev -> current)
+                prev_doors = getattr(prev_game_state, "doors", []) if prev_game_state else []
+                cur_doors = getattr(new_state, "doors", []) or []
+                if len(prev_doors) == 0 and len(cur_doors) > 0:
+                    sound.play_sfx("door_open")
+
+            prev_game_state = new_state
+            game_state = new_state
             #print("game_state:",game_state)        
 
         pygame.display.flip()
