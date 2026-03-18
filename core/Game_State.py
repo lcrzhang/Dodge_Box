@@ -152,12 +152,8 @@ class Game_State:
                 except ValueError:
                     pass
                 player.take_damage(1)
-                # small respawn to avoid immediate repeated hits
-                player.position.x = self.world_size.x // 2
-                player.position.y = 50
-                player.speed.y = 0
 
-                # if player's health reached zero -> game over
+                # If player's health reached zero -> game over (do not respawn)
                 if player.health <= 0:
                     self.game_over = True
                     # record how many levels the player completed (at least 1)
@@ -166,7 +162,17 @@ class Game_State:
                     self.timer_started = False
                     self.projectiles.clear()
                     self.warnings.clear()
-                break
+                else:
+                    # Respawn at the current level's spawn point (fallback to center)
+                    try:
+                        sx, sy = self.current_level.spawn
+                    except Exception:
+                        # fallback positions if no current level set
+                        sx = int(self.world_size.x // 2) if hasattr(self.world_size, "x") else int(self.world_size[0] // 2)
+                        sy = 50
+                    player.position.x = int(sx)
+                    player.position.y = int(sy)
+                    player.speed.y = 0
 
     def spawn_units(self):
         """Called regularly by server tick; update timers, projectiles and warnings."""
