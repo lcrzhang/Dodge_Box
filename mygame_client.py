@@ -34,6 +34,7 @@ def main(name, port, host):
     small_font = pygame.font.SysFont('Comic Sans MS', 24)
     
     running = True
+    play_again_clicked = False
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -41,6 +42,24 @@ def main(name, port, host):
             if not started and event.type == pygame.KEYDOWN:
                 started = True
                 just_started = True
+            # If game over, allow clicking the Play Again button (convert mouse to game coords)
+            if event.type == pygame.MOUSEBUTTONDOWN and game_state and getattr(game_state, "game_over", False):
+                mx, my = event.pos
+                win_w, win_h = display.get_size()
+                scale = min(win_w / game_w, win_h / game_h)
+                scaled_w = int(game_w * scale)
+                scaled_h = int(game_h * scale)
+                offset_x = (win_w - scaled_w) // 2
+                offset_y = (win_h - scaled_h) // 2
+                if offset_x <= mx <= offset_x + scaled_w and offset_y <= my <= offset_y + scaled_h:
+                    gx = int((mx - offset_x) / scale)
+                    gy = int((my - offset_y) / scale)
+                    # button location (must match drawing below)
+                    btn_w, btn_h = 240, 50
+                    btn_x = (game_w - btn_w) // 2
+                    btn_y = (game_h // 2) + 40
+                    if btn_x <= gx <= btn_x + btn_w and btn_y <= gy <= btn_y + btn_h:
+                        play_again_clicked = True
 
         # Update internal resolution if we have a game_state with a larger/different world
         if game_state:
@@ -64,7 +83,7 @@ def main(name, port, host):
             game_surface.blit(title, title_rect)
             game_surface.blit(prompt, prompt_rect)
         else:
-            action = get_action(name, pygame.key.get_pressed(), start_game=just_started)
+            action = get_action(name, pygame.key.get_pressed(), start_game=just_started or play_again_clicked)
             just_started = False
             socket.send_pyobj(action) # send action
              
@@ -102,8 +121,54 @@ def main(name, port, host):
                 # no game state yet — clear to default
                 game_surface.fill(background_color)
 
-            game_state = socket.recv_pyobj() # receive game_state
-            #print("game_state:",game_state)        
+            # Receive new game_state from server (blocking until reply)
+            try:
+                game_state = socket.recv_pyobj()
+            except Exception:
+                # If receive fails, stop running
+                running = False
+            else:
+                # If we requested "Play Again", server should have reset state.
+                # Return client to the start screen and clear local UI state so the player
+                # sees the welcome screen again (fully reset).
+                if play_again_clicked:
+                    # clear UI / caches
+                    started = False
+                    just_started = False
+                    play_again_clicked = False
+                    background_cache.clear()
+                    background_image = None
+                    # reset internal render target to default
+                    game_w, game_h = 800, 600
+                    game_surface = pygame.Surface((game_w, game_h))
+                    # drop server state locally so start screen shows
+                    game_state = None
+
+        # If server reports game over, draw overlay + Play Again button on the internal game_surface
+        if game_state and getattr(game_state, "game_over", False):
+            overlay = pygame.Surface((game_w, game_h), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 180))
+            go_font = pygame.font.SysFont("Comic Sans MS", 48, bold=True)
+            small = pygame.font.SysFont("Comic Sans MS", 28)
+            txt = go_font.render("GAME OVER", True, (255, 200, 200))
+            txt_rect = txt.get_rect(center=(game_w // 2, game_h // 2 - 40))
+            overlay.blit(txt, txt_rect)
+            achieved = getattr(game_state, "game_over_achieved_levels", 0)
+            lvl_msg = f"You reached level {achieved}"
+            lvl_txt = small.render(lvl_msg, True, (255, 255, 255))
+            lvl_rect = lvl_txt.get_rect(center=(game_w // 2, game_h // 2))
+            overlay.blit(lvl_txt, lvl_rect)
+            # Play Again button
+            btn_w, btn_h = 240, 50
+            btn_x = (game_w - btn_w) // 2
+            btn_y = (game_h // 2) + 40
+            pygame.draw.rect(overlay, (40, 160, 40), (btn_x, btn_y, btn_w, btn_h), border_radius=6)
+            pygame.draw.rect(overlay, (255, 255, 255), (btn_x, btn_y, btn_w, btn_h), 2, border_radius=6)
+            btn_txt = small.render("Play Again", True, (255, 255, 255))
+            btn_rect = btn_txt.get_rect(center=(btn_x + btn_w // 2, btn_y + btn_h // 2))
+            overlay.blit(btn_txt, btn_rect)
+            # blit overlay onto game_surface (on top) BEFORE scaling so it becomes visible
+            game_surface.blit(overlay, (0, 0))
 
         # Scale the internal game surface to the window size with aspect ratio preserved.
         win_w, win_h = display.get_size()

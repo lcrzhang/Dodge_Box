@@ -22,6 +22,10 @@ class Game_State:
         self.warnings = []          # ProjectileWarning objects waiting to spawn
         self.timer = 0.0
         self.timer_started = False
+
+        # Game over state
+        self.game_over = False
+        self.game_over_achieved_levels = 0
         
         self.levels_played = 0
         self.current_level_index = -1
@@ -93,9 +97,29 @@ class Game_State:
                 self.doors = [Door(ld[0], ld[1], False)]
 
     def update(self, action):
+        # If game over and player pressed Start, restart the run and reset level counter
+        if action.is_start_game() and self.game_over:
+            # reset players health and state
+            for p in self.players.values():
+                p.health = Player.max_health
+            # reset progression / counters so the next run starts at level 1
+            self.game_over = False
+            self.game_over_achieved_levels = 0
+            self.levels_played = 0
+            self.current_level_index = -1
+            self.difficulty = DifficultySettings(0)
+            self.active_modifier = None
+            # load first level and return early
+            self.load_level(index=0)
+            return
+
         if action.is_start_game():
             # start_game signal is used elsewhere; do not auto-start the level timer here
             pass
+
+        # if game is over ignore most inputs
+        if self.game_over:
+            return
 
         name = action.get_name()
         if not name in self.players: # if the name is not seen before
@@ -132,6 +156,16 @@ class Game_State:
                 player.position.x = self.world_size.x // 2
                 player.position.y = 50
                 player.speed.y = 0
+
+                # if player's health reached zero -> game over
+                if player.health <= 0:
+                    self.game_over = True
+                    # record how many levels the player completed (at least 1)
+                    self.game_over_achieved_levels = max(1, self.levels_played)
+                    # stop hazards/timer
+                    self.timer_started = False
+                    self.projectiles.clear()
+                    self.warnings.clear()
                 break
 
     def spawn_units(self):
