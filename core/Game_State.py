@@ -214,7 +214,10 @@ class Game_State:
         # random projectiles (warnings) based on time and difficulty
         chance_this_tick = self.difficulty.spawn_rate_per_sec * delta_s
         if random.random() < chance_this_tick:
-            size = random.randint(10, 40)
+            # Scale projectile size relative to the map width (2% to 6%)
+            min_size = max(10, int(self.world_size.x * 0.02))
+            max_size = max(min_size, int(self.world_size.x * 0.06))
+            size = random.randint(min_size, max_size)
             edge = random.choice(["top", "left", "right"])
             if edge == "top":
                 x = random.randint(0, int(self.world_size.x))

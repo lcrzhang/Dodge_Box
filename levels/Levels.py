@@ -100,7 +100,7 @@ class Level:
 # Level definitions — edit freely!
 # ---------------------------------------------------------------------------
 
-LEVEL_4 = Level(
+LEVEL_1 = Level(
     name="The Beginning",
     platforms=[
         # Ground
@@ -169,7 +169,7 @@ LEVEL_3 = Level(
     world_size=(1600, 1200),    # 2x width, 2x height
 )
 
-LEVEL_1 = Level(
+LEVEL_4 = Level(
     name="Icy Spikes",
     platforms=[
         # Left spawn platform
@@ -193,6 +193,7 @@ LEVEL_1 = Level(
     background="images/Level4/ice_bg.png",
     projectile_images=["images/Level4/ice_spike.png"],
     modifiers=PlayerModifiers(
+        gravity=0.35,
         friction=0.99,       # Very slippery map
         acceleration=0.3,    # Difficult to accelerate (ice)
     ),
