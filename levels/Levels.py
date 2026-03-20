@@ -215,12 +215,11 @@ LEVEL_4 = Level(
         (0, 1000, 1920, 80)
     ],
     door=(1700, 720),
-    spawn=(150, 700),
+    spawn=(150, 700),# extra wide and deep floor
     theme="ice",
     background="images/Level4/ice_bg.png",
     projectile_images=["images/Level4/ice_spike.png"],
     modifiers=PlayerModifiers(
-        gravity=0.35,
         friction=0.99,       # Very slippery map
         acceleration=0.3,    # Difficult to accelerate (ice)
     ),

@@ -33,7 +33,8 @@ class Player:
             
         self.is_jumping_btn_held = action.is_jump()
         if self.is_jumping_btn_held and self.on_ground:
-            self.speed.y = modifiers.jump_speed
+            # increase jump impulse so jump height is higher
+            self.speed.y = modifiers.jump_speed * 1.5
             self.on_ground = False
 
         # Drop through platforms when holding down while on a platform
