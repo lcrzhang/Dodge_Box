@@ -129,13 +129,15 @@ LOBBY_LEVEL = Level(
 LEVEL_1 = Level(
     name="The Beginning",
     platforms=[
-        # Ground
-        (0,   1000, 1920, 80),
-        # Staircase going up-right
-        (100, 450, 130, 20),
-        (260, 350, 130, 20),
-        (420, 250, 130, 20),
-        (580, 150, 130, 20),
+
+        (0,   1000, 1920, 80), #Ground
+        (100,  900, 100, 20), #left under
+        (1770, 900, 100, 20), #right under
+        (560, 980, 100, 20), #center left under
+        (1260, 980, 100, 20), #center right under
+        (910, 800, 100, 20), #center under
+        (260, 700, 200, 20), #left middle
+        (1460, 700, 200, 20), #right middle
     ],
     door=(1900, 920),
     spawn=(20, 515),
