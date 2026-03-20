@@ -227,4 +227,24 @@ LEVEL_4 = Level(
     world_size=(1920, 1080)
 )
 
-LEVELS = [LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4]
+LEVEL_5 = Level(
+    name="Beach Resort",
+    platforms=[
+        # Ground
+        (0,   1000, 1920, 80),
+        # Some low platforms
+        (150, 850, 200, 20),
+        (450, 700, 200, 20),
+        (800, 600, 300, 20),
+        (1200, 750, 200, 20),
+        (1500, 850, 200, 20),
+    ],
+    door=(1800, 920),
+    spawn=(50, 900),
+    theme="beach",
+    background="images/Level5/scenic-view-of-beach-against-clear-blue-sky-740672775-597a52fdc412440010fe86a9.jpg",  # Sandy color
+    projectile_images=["images/Level5/coconut.png"],
+    world_size=(1920, 1080)
+)
+
+LEVELS = [LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_5]
