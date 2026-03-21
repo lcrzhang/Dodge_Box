@@ -113,6 +113,14 @@ LOBBY_LEVEL = Level(
         (200, 925, 400, 20),    # Left platform
         (760, 800, 400, 20),    # Center platform
         (1320, 925, 400, 20),   # Right platform
+        (0, 400, 100, 20), # left high wall platform
+        (0, 600, 150, 20), # left middle wall platform
+        (1820, 400, 100, 20), # right high wall platform
+        (1770, 600, 150, 20), # right middle wall platform
+        (460, 600, 200, 20), # left middle platform
+        (1260, 600, 200, 20), # right middle platform
+        (300, 250, 100, 20), # left high platform
+        (1520, 250, 100, 20), # right high platform
     ],
     kill_zones=[],
     door=(940, 720),            # On the center platform
