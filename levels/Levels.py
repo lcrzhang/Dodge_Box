@@ -125,6 +125,7 @@ LOBBY_LEVEL = Level(
     kill_zones=[],
     door=(940, 720),            # On the center platform
     spawn=(100, 950),
+    background="images/lobby/misterius.png",
     theme="lobby",
     world_size=(1920, 1080),
     instructions=[
