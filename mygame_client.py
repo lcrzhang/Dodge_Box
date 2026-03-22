@@ -799,10 +799,15 @@ class AssetCache: # class to generate and store textures of user names and ghost
                 if facing_right:
                     base_img = pygame.transform.flip(base_img, True, False)
 
-                # Coloring: Use BLEND_RGBA_MULT
+                # Coloring: Use BLEND_RGBA_MULT with a tinted color to preserve the white interior
                 colored_ghost = base_img.copy()
                 color_surf = pygame.Surface(ghost_size, pygame.SRCALPHA)
-                color_surf.fill((*color, 255))
+                
+                # Mix the chosen color with white (50%) to create a pastel tint
+                r, g, b = color
+                tint = ((r + 255) // 2, (g + 255) // 2, (b + 255) // 2, 255)
+                color_surf.fill(tint)
+                
                 colored_ghost.blit(color_surf, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
                 
                 self.ghost_textures[key] = colored_ghost

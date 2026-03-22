@@ -169,9 +169,8 @@ class Player:
 
     def draw(self, surface, asset_cache, viewer_name=None, is_viewer_dead=False, active_modifier=None):
         if self.health <= 0:
-            # Visible if it's the local player, or if the local player is also dead
-            if self.name != viewer_name and not is_viewer_dead:
-                return # Invisible to living players
+            # Ghost should be faded if the viewer is alive and looking at another player's ghost
+            is_faded = (self.name != viewer_name and not is_viewer_dead)
                 
             # If inverted controls are active, our movement direction/logic is flipped
             is_inverted = active_modifier and getattr(active_modifier, "inverted_controls", False)
@@ -180,17 +179,21 @@ class Player:
             ghost_img = asset_cache.get_ghost_texture(self.color, should_flip)
             
             if ghost_img:
+                if is_faded:
+                    ghost_img = ghost_img.copy()
+                    ghost_img.set_alpha(102) # 40% opacity
                 # Offset by -10, -10 to center 60x60 sprite over 40x40 hitbox
                 surface.blit(ghost_img, (int(self.position.x - 10), int(self.position.y - 10)))
             else:
                 ghost_size = 60
                 ghost_surf = pygame.Surface((ghost_size, ghost_size), pygame.SRCALPHA)
-                pygame.draw.rect(ghost_surf, (*self.color, 255), (0, 0, ghost_size, ghost_size), 4)
+                alpha = 102 if is_faded else 255
+                pygame.draw.rect(ghost_surf, (*self.color, alpha), (0, 0, ghost_size, ghost_size), 4)
                 surface.blit(ghost_surf, (int(self.position.x - 10), int(self.position.y - 10)))
                 
             name_texture = asset_cache.get_texture(self.name)
             name_surf = name_texture.copy()
-            name_surf.set_alpha(128)
+            name_surf.set_alpha(102 if is_faded else 128)
             text_offset = pygame.Vector2(name_texture.get_size())
             text_offset.x /= 2
             text_offset.x -= Player.width / 2
