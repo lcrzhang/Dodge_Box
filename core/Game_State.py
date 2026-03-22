@@ -85,8 +85,11 @@ class Game_State:
         self._last_tick_ms = time.time() * 1000.0
 
         # Spawn door immediately if we are in the lobby
+        # ── Spawn door immediately if we are in the lobby
         if getattr(self, "in_lobby", False):
-            self.doors = [Door(level.door[0], level.door[1], False)]
+            ld = level.door
+            # Use a texture for the door
+            self.doors = [Door(ld[0], ld[1], False)]
 
         # Random level modifier (unlocked after MODIFIER_UNLOCK_LEVEL levels played)
         if not is_lobby and self.levels_played >= MODIFIER_UNLOCK_LEVEL and random.random() < MODIFIER_CHANCE:
@@ -126,15 +129,15 @@ class Game_State:
         if self.timer <= 0:
             self.timer = 0.0
             # spawn/show the door once when timer finishes
+            # ── Spawn door when timer reaches 0
             if getattr(self, "current_level", None) and not self.doors:
-                # Trigger black hole effect if it's exactly the 5th level played
                 if self.levels_played == 5 and not getattr(self, "in_lobby", False):
-                    # Only activate once
                     if not self.black_hole_active:
                         self.black_hole_active = True
                         self.black_hole_start_time = time.time()
                 else:
                     ld = self.current_level.door
+                    # Spawn door with texture
                     self.doors = [Door(ld[0], ld[1], False)]
 
     def update(self, action):

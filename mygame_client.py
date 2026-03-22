@@ -9,6 +9,7 @@ from SoundManager import SoundManager
 
 from core.Action import Action
 from core.Game_State import Game_State
+from entities.Door import Door
 
 def main(name, port, host):
     # connect to server
@@ -23,6 +24,7 @@ def main(name, port, host):
     display = pygame.display.set_mode((1920, 1080), pygame.RESIZABLE)
     pygame.display.set_caption('Dodge Box')
     surface = pygame.display.get_surface()
+    Door.preload_texture("images/door.jpg")
     
     # Internal render target dimensions
     game_w, game_h = 1920, 1080
