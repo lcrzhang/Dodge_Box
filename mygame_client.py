@@ -610,31 +610,36 @@ def main(name, port, host):
                 # no game state yet — clear to default
                 game_surface.fill(background_color)
 
-            # Receive new game_state from server (blocking until reply)
-            try:
-                game_state.apply_compressed_state(network_client.receive_game_state())
-            except Exception:
-                # If receive fails, stop running
-                running = False
-            else:
-                if not getattr(game_state, "black_hole_active", False):
-                    black_hole_menu_active = False
+            # Receive latest game_state from the background network thread (non-blocking)
+            state_data = network_client.receive_game_state()
+            if state_data:
+                try:
+                    if game_state is None:
+                        game_state = Game_State(pygame.Vector2(game_w, game_h))
+                        
+                    game_state.apply_compressed_state(state_data)
+                except Exception:
+                    # Corrupted state or unexpected issue
+                    pass
+                else:
+                    if not getattr(game_state, "black_hole_active", False):
+                        black_hole_menu_active = False
 
-                # If we requested "Play Again", server should have reset state.
-                # Return client to the start screen and clear local UI state so the player
-                # sees the welcome screen again (fully reset).
-                if play_again_clicked:
-                    # clear UI / caches
-                    started = False
-                    just_started = False
-                    play_again_clicked = False
-                    background_cache.clear()
-                    background_image = None
-                    # reset internal render target to default
-                    game_w, game_h = 1920, 1080
-                    game_surface = pygame.Surface((game_w, game_h))
-                    # drop server state locally so start screen shows
-                    game_state = None
+                    # If we requested "Play Again", server should have reset state.
+                    # Return client to the start screen and clear local UI state so the player
+                    # sees the welcome screen again (fully reset).
+                    if play_again_clicked:
+                        # clear UI / caches
+                        started = False
+                        just_started = False
+                        play_again_clicked = False
+                        background_cache.clear()
+                        background_image = None
+                        # reset internal render target to default
+                        game_w, game_h = 1920, 1080
+                        game_surface = pygame.Surface((game_w, game_h))
+                        # drop server state locally so start screen shows
+                        game_state = None
 
             if game_state and name in game_state.players:
                 current_on_ground = game_state.players[name].on_ground
