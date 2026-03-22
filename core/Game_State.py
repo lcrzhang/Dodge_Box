@@ -43,6 +43,141 @@ class Game_State:
         self.in_lobby = True
         self.load_level(is_lobby=True)
 
+    def get_compressed_state(self):
+        """Returns a minimal serializable dictionary of the dynamic game state."""
+        # Dynamic players state
+        p_state = {}
+        for name, p in self.players.items():
+            p_state[name] = {
+                'pos': (p.position.x, p.position.y),
+                'speed': (p.speed.x, p.speed.y),
+                'hp': p.health,
+                'color': p.color,
+                'facing': p.facing_right,
+                'jumps': getattr(p, 'jumps_remaining', 0)
+            }
+
+        # Dynamic projectiles
+        projs = []
+        for pr in self.projectiles:
+            projs.append({
+                'pos': (pr.position.x, pr.position.y),
+                'speed': (pr.speed.x, pr.speed.y),
+                'sz': pr.width,
+                'img': pr.image_path,
+                'col': pr.color,
+                'sh': pr.shape
+            })
+
+        # Dynamic warnings
+        warns = []
+        for w in self.warnings:
+            warns.append({
+                'sp': (w.spawn_pos.x, w.spawn_pos.y),
+                'bs': (w.base_speed.x, w.base_speed.y),
+                'sz': w.size,
+                'tr': w.time_remaining,
+                'tw': w.warning_time,
+                'img': w.chosen_image
+            })
+
+        # Dynamic doors
+        ds = []
+        for door in self.doors:
+            ds.append({'pos': (door.rect.x, door.rect.y)})
+
+        return {
+            't': self.timer,
+            'ts': self.timer_started,
+            'p': p_state,
+            'j': projs,
+            'w': warns,
+            'd': ds,
+            'mod': self.active_modifier.name if self.active_modifier else None,
+            'li': self.current_level_index,
+            'lp': self.levels_played,
+            'go': self.game_over,
+            'goa': self.game_over_achieved_levels,
+            'bh': self.black_hole_active,
+            'bhs': self.black_hole_start_time,
+            'il': self.in_lobby,
+            'pa': self.is_paused,
+            'ws': (self.world_size.x, self.world_size.y)
+        }
+
+    def apply_compressed_state(self, s):
+        """Updates this Game_State instance from a compressed state dictionary."""
+        # Level change sync
+        if s['li'] != self.current_level_index or (s['il'] != self.in_lobby):
+            self.load_level(index=s['li'] if s['li'] >= 0 else None, is_lobby=s['il'])
+        
+        self.timer = s['t']
+        self.timer_started = s['ts']
+        self.levels_played = s['lp']
+        self.game_over = s['go']
+        self.game_over_achieved_levels = s['goa']
+        self.black_hole_active = s['bh']
+        self.black_hole_start_time = s['bhs']
+        self.is_paused = s['pa']
+        self.world_size = pygame.Vector2(s['ws'])
+
+        # Sync Active Modifier
+        if s['mod'] is None:
+            self.active_modifier = None
+        elif not self.active_modifier or self.active_modifier.name != s['mod']:
+            for m in AVAILABLE_MODIFIERS:
+                if m.name == s['mod']:
+                    self.active_modifier = m
+                    break
+
+        # Sync Players
+        current_names = set(s['p'].keys())
+        # Remove players no longer in the state
+        to_remove = [n for n in self.players if n not in current_names]
+        for n in to_remove:
+            p = self.players.pop(n)
+            if p in self.units: self.units.remove(p)
+
+        for name, data in s['p'].items():
+            if name not in self.players:
+                p = Player(self.world_size, name)
+                self.players[name] = p
+                self.units.append(p)
+            else:
+                p = self.players[name]
+            
+            p.position = pygame.Vector2(data['pos'])
+            p.speed = pygame.Vector2(data['speed'])
+            p.health = data['hp']
+            p.color = data['color']
+            p.facing_right = data['facing']
+            p.jumps_remaining = data['jumps']
+
+        # Sync Projectiles (simpler to just recreate from info list)
+        self.projectiles = []
+        for pr_data in s['j']:
+            pr = Projectile(pr_data['pos'], pr_data['speed'], pr_data['sz'], pr_data['img'])
+            pr.color = pr_data['col']
+            pr.shape = pr_data['sh']
+            self.projectiles.append(pr)
+
+        # Sync Warnings
+        self.warnings = []
+        for w_data in s['w']:
+            w = ProjectileWarning(w_data['sp'], w_data['bs'], w_data['sz'], w_data['tw'])
+            w.time_remaining = w_data['tr']
+            w.chosen_image = w_data['img']
+            self.warnings.append(w)
+
+        # Sync Doors
+        if len(self.doors) != len(s['d']):
+            self.doors = []
+            for d_data in s['d']:
+                self.doors.append(Door(d_data['pos'][0], d_data['pos'][1]))
+        else:
+            for i, d_data in enumerate(s['d']):
+                self.doors[i].rect.x, self.doors[i].rect.y = d_data['pos']
+
     def load_level(self, index=None, is_lobby=False):
         """Load a hand-crafted level. Pass an index, or None for random."""
         if is_lobby:
@@ -424,7 +559,7 @@ class Game_State:
             )
             self.warnings.append(warning)
 
-    def draw(self, name, surface, name_textures):
+    def draw(self, name, surface, asset_cache):
         rect = pygame.Rect(pygame.Vector2(0, 0), self.world_size)
         white = (255, 255, 255)
         pygame.draw.rect(surface, white, rect, 2)
@@ -447,7 +582,7 @@ class Game_State:
             is_viewer_dead = self.players[name].health <= 0
             
         for unit in self.units:
-            unit.draw(surface, name_textures, name, is_viewer_dead, self.active_modifier)
+            unit.draw(surface, asset_cache, name, is_viewer_dead, self.active_modifier)
 
         # ── Draw kill zones ───────────────────────────────────────────────────
         if hasattr(self, "current_level") and self.current_level and self.current_level.kill_zones:

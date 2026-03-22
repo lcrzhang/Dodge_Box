@@ -153,51 +153,28 @@ class Player:
                     self.on_ground = True
                     self.jumps_remaining = modifiers.max_jumps
 
-    def draw(self, surface, name_textures, viewer_name=None, is_viewer_dead=False, active_modifier=None):
+    def draw(self, surface, asset_cache, viewer_name=None, is_viewer_dead=False, active_modifier=None):
         if self.health <= 0:
             # Visible if it's the local player, or if the local player is also dead
             if self.name != viewer_name and not is_viewer_dead:
                 return # Invisible to living players
                 
-            if not hasattr(self, 'ghost_img') or getattr(self, '_last_ghost_color', None) != self.color:
-                try:
-                    import os
-                    img_path = "images/general (All levels)/ghost.png"
-                    base_img = pygame.image.load(img_path).convert_alpha()
-                    # Scale to 60x60 (1.5x original 40x40)
-                    ghost_size = (60, 60)
-                    base_img = pygame.transform.scale(base_img, ghost_size)
-                    
-                    # Create colored version
-                    self.ghost_img = base_img.copy()
-                    color_surf = pygame.Surface(ghost_size, pygame.SRCALPHA)
-                    color_surf.fill((*self.color, 255))
-                    self.ghost_img.blit(color_surf, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
-                    
-                    self.ghost_img.set_alpha(128) # 50% opacity
-                    self._last_ghost_color = self.color
-                except Exception:
-                    self.ghost_img = None
+            # If inverted controls are active, our movement direction/logic is flipped
+            is_inverted = active_modifier and getattr(active_modifier, "inverted_controls", False)
+            should_flip = (self.facing_right and not is_inverted) or (not self.facing_right and is_inverted)
             
-            if self.ghost_img:
-                img_to_draw = self.ghost_img
-                
-                # If inverted controls are active, we logic is flipped
-                is_inverted = active_modifier and getattr(active_modifier, "inverted_controls", False)
-                should_flip = (self.facing_right and not is_inverted) or (not self.facing_right and is_inverted)
-                
-                if should_flip:
-                    img_to_draw = pygame.transform.flip(self.ghost_img, True, False)
-                
+            ghost_img = asset_cache.get_ghost_texture(self.color, should_flip)
+            
+            if ghost_img:
                 # Offset by -10, -10 to center 60x60 sprite over 40x40 hitbox
-                surface.blit(img_to_draw, (int(self.position.x - 10), int(self.position.y - 10)))
+                surface.blit(ghost_img, (int(self.position.x - 10), int(self.position.y - 10)))
             else:
                 ghost_size = 60
                 ghost_surf = pygame.Surface((ghost_size, ghost_size), pygame.SRCALPHA)
-                pygame.draw.rect(ghost_surf, (*self.color, 128), (0, 0, ghost_size, ghost_size), 4)
+                pygame.draw.rect(ghost_surf, (*self.color, 255), (0, 0, ghost_size, ghost_size), 4)
                 surface.blit(ghost_surf, (int(self.position.x - 10), int(self.position.y - 10)))
                 
-            name_texture = name_textures.get_texture(self.name)
+            name_texture = asset_cache.get_texture(self.name)
             name_surf = name_texture.copy()
             name_surf.set_alpha(128)
             text_offset = pygame.Vector2(name_texture.get_size())
@@ -209,7 +186,7 @@ class Player:
 
         rect = pygame.Rect(self.position.x, self.position.y, Player.width, Player.height)
         pygame.draw.rect(surface, self.color, rect, 4)
-        name_texture = name_textures.get_texture(self.name)
+        name_texture = asset_cache.get_texture(self.name)
         text_offset = pygame.Vector2(name_texture.get_size())
         text_offset.x /= 2
         text_offset.x -= Player.width / 2

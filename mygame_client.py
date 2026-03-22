@@ -64,7 +64,7 @@ def main(name, port, host):
 
     blackhole_player = None # Lazy load later
     background_image = None 
-    name_textures = Name_Textures()
+    asset_cache = AssetCache()
     
     # Font for black hole lore
     lore_font = pygame.font.SysFont("Comic Sans MS", 60, italic=True)
@@ -74,7 +74,7 @@ def main(name, port, host):
     black_hole_selected_index = 0
     continue_playing_clicked = False
     
-    game_state = None
+    game_state = Game_State(pygame.Vector2(game_w, game_h))
     started = False
     just_started = False
     prev_on_ground = True
@@ -185,7 +185,7 @@ def main(name, port, host):
                                     try:
                                         d_action = get_action(name, pygame.key.get_pressed(), disconnect=True)
                                         socket.send_pyobj(d_action)
-                                        socket.recv_pyobj() # clear response
+                                        game_state.apply_compressed_state(socket.recv_pyobj()) # clear response
                                     except Exception: pass
                                     started = False
                                     just_started = False
@@ -251,7 +251,7 @@ def main(name, port, host):
                                             try:
                                                 d_action = get_action(name, pygame.key.get_pressed(), disconnect=True)
                                                 socket.send_pyobj(d_action)
-                                                socket.recv_pyobj()
+                                                game_state.apply_compressed_state(socket.recv_pyobj())
                                             except Exception: pass
                                             started = False
                                             just_started = False
@@ -292,7 +292,7 @@ def main(name, port, host):
                             try:
                                 d_action = get_action(name, pygame.key.get_pressed(), disconnect=True)
                                 socket.send_pyobj(d_action)
-                                socket.recv_pyobj() # clear response
+                                game_state.apply_compressed_state(socket.recv_pyobj()) # clear response
                             except Exception: pass
                             started = False
                             just_started = False
@@ -322,7 +322,7 @@ def main(name, port, host):
                                 try:
                                     d_action = get_action(name, pygame.key.get_pressed(), disconnect=True)
                                     socket.send_pyobj(d_action)
-                                    socket.recv_pyobj()
+                                    game_state.apply_compressed_state(socket.recv_pyobj())
                                 except Exception: pass
                                 started = False
                                 just_started = False
@@ -589,7 +589,7 @@ def main(name, port, host):
                     game_surface.fill(background_color)
 
                 # draw last game_state on top of background
-                game_state.draw(name, game_surface, name_textures)
+                game_state.draw(name, game_surface, asset_cache)
 
                 # Draw timer
                 minutes = int(game_state.timer) // 60
@@ -668,7 +668,7 @@ def main(name, port, host):
                                 pygame.draw.rect(game_surface, p_color, (ox - 10, oy - 10, 20, 20), 2)
                                 
                                 # Draw name tag
-                                n_txt = name_textures.get_texture(p_name)
+                                n_txt = asset_cache.get_texture(p_name)
                                 n_rect = n_txt.get_rect(midbottom=(ox, oy - 15))
                                 game_surface.blit(n_txt, n_rect)
                         
@@ -700,7 +700,7 @@ def main(name, port, host):
 
             # Receive new game_state from server (blocking until reply)
             try:
-                game_state = socket.recv_pyobj()
+                game_state.apply_compressed_state(socket.recv_pyobj())
             except Exception:
                 # If receive fails, stop running
                 running = False
@@ -878,18 +878,46 @@ def get_action(name, keys, start_game=False, set_pause=None, color=(255, 255, 25
     down = keys[pygame.K_DOWN] or keys[pygame.K_s]
     return Action(name, left, right, jump, down, start_game, set_pause, color, debug_command, disconnect)
 
-class Name_Textures: # class to generate and store textures of user names
-
+class AssetCache: # class to generate and store textures of user names and ghosts
     def __init__(self):
-        self.name_textures={}
+        self.asset_cache = {}
+        self.ghost_textures = {} # Key: (color_tuple, facing_right)
 
     def get_texture(self, name):
-        if not name in self.name_textures:
+        if not name in self.asset_cache:
             font = pygame.font.SysFont('Comic Sans MS', 24, bold=True)
-            name_texture = font.render(name, False, (255,255,255))
-            self.name_textures[name] = name_texture
-        return self.name_textures[name]
-        
+            name_texture = font.render(name, False, (255, 255, 255))
+            self.asset_cache[name] = name_texture
+        return self.asset_cache[name]
+
+    def get_ghost_texture(self, color, facing_right):
+        key = (tuple(color), facing_right)
+        if key not in self.ghost_textures:
+            try:
+                import os
+                img_path = "images/general (All levels)/ghost.png"
+                if not os.path.exists(img_path):
+                    return None
+                
+                base_img = pygame.image.load(img_path).convert_alpha()
+                ghost_size = (60, 60)
+                base_img = pygame.transform.scale(base_img, ghost_size)
+                
+                # Flip before coloring if needed (base is assumed to face left)
+                if facing_right:
+                    base_img = pygame.transform.flip(base_img, True, False)
+
+                # Coloring: Use BLEND_RGBA_MULT
+                colored_ghost = base_img.copy()
+                color_surf = pygame.Surface(ghost_size, pygame.SRCALPHA)
+                color_surf.fill((*color, 255))
+                colored_ghost.blit(color_surf, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+                
+                self.ghost_textures[key] = colored_ghost
+            except Exception:
+                return None
+        return self.ghost_textures[key]
+
 if __name__ == "__main__":
     name = "_"
     port = 2345

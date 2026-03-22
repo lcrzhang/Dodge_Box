@@ -32,7 +32,7 @@ def main(port, host):
         for sock, _ in events:
             action = sock.recv_pyobj()
             actions[action.get_name()] = action
-            sock.send_pyobj(game_state)
+            sock.send_pyobj(game_state.get_compressed_state())
 
         # Update game state when frame time has elapsed
         if time.time() - prev_time >= 1 / game_fps:
