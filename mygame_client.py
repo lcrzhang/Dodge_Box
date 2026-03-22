@@ -211,7 +211,10 @@ def main(name, port, host):
                             by = 500 + i * 80
                             if game_w // 2 - 300 <= gx <= game_w // 2 + 300 and by - 30 <= gy <= by + 30:
                                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                                    if i == 0: started = True; just_started = True; play_bg_music()
+                                    if i == 0:
+                                        if not network_client.running:
+                                            network_client = NetworkClient(host, port)
+                                        started = True; just_started = True; play_bg_music()
                                     elif i == 1: main_menu_state = "customize"; main_selected_index = 0
                                     elif i == 2: main_menu_state = "settings"; main_selected_index = 0
                                     elif i == 3: main_menu_state = "credits"; main_selected_index = 0
@@ -372,7 +375,10 @@ def main(name, port, host):
                     main_selected_index = (main_selected_index + 1) % len(options)
                 elif event.key == pygame.K_RETURN:
                     if main_menu_state == "main":
-                        if main_selected_index == 0: started = True; just_started = True; play_bg_music()
+                        if main_selected_index == 0:
+                            if not network_client.running:
+                                network_client = NetworkClient(host, port)
+                            started = True; just_started = True; play_bg_music()
                         elif main_selected_index == 1: main_menu_state = "customize"; main_selected_index = 0
                         elif main_selected_index == 2: main_menu_state = "settings"; main_selected_index = 0
                         elif main_selected_index == 3: main_menu_state = "credits"; main_selected_index = 0

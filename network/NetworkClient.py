@@ -50,6 +50,9 @@ class NetworkClient:
             else:
                 time.sleep(0.01) # idle sleep
 
+        socket.setsockopt(zmq.LINGER, 0)
+        socket.close()
+
     def send_action(self, action):
         """Queues an Action object to be sent to the server in the background."""
         with self.lock:
@@ -67,6 +70,7 @@ class NetworkClient:
         try:
             # We use a completely new socket inline so the thread shutdown is clean
             sock = self.context.socket(zmq.REQ)
+            sock.setsockopt(zmq.LINGER, 0)
             sock.connect(f"tcp://{self.host}:{self.port}")
             sock.send_pyobj(action)
             
@@ -74,5 +78,7 @@ class NetworkClient:
             poller.register(sock, zmq.POLLIN)
             if dict(poller.poll(500)):  # 500ms timeout for graceful disconnect
                 sock.recv_pyobj()
+            sock.close()
         except Exception:
             pass
+        self.context.term()
