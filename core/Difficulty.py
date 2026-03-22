@@ -65,4 +65,4 @@ class DifficultySettings:
             return 1.0 + self.levels_played * 0.08
         else:
             base_mult = 1.0 + 5 * 0.08
-            return base_mult * (2 ** (self.levels_played - 5))
+            return base_mult + (self.levels_played - 5) * 0.15
