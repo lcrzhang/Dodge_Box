@@ -259,7 +259,7 @@ def main(name, port, host):
                                     elif event.type == pygame.MOUSEMOTION:
                                         pause_selected_index = i
                         elif pause_menu_state == "settings":
-                            by = game_h // 2 + 100
+                            by = game_h - 150
                             if game_w // 2 - 200 <= gx <= game_w // 2 + 200 and by - 30 <= gy <= by + 30:
                                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                                     pause_menu_state = "main"; pause_selected_index = 0
@@ -546,8 +546,8 @@ def main(name, port, host):
             elif main_menu_state == "credits":
                 title = font.render("Game made by:", True, (255, 255, 255))
                 game_surface.blit(title, title.get_rect(center=(game_w // 2, game_h // 2 - 180)))
-                
-                names = ["Patrick", "Leo", "Luuk", "Jelle"]
+
+                names = ["Patrick Lira van de Meent", "Leo Zhang ", "Luuk van der Duim ", "Jelle Zegers", "soundtrack: Fun Time by Zambolino"]
                 for i, n in enumerate(names):
                     n_surf = font.render(n, True, (200, 200, 255))
                     game_surface.blit(n_surf, n_surf.get_rect(center=(game_w // 2, game_h // 2 - 60 + i * 80)))
@@ -849,9 +849,9 @@ def main(name, port, host):
                 pygame.draw.line(pause_overlay, (200, 200, 200), (slider_x, j_slider_y), (slider_x + j_filled_w, j_slider_y), 12)
                 pygame.draw.circle(pause_overlay, j_color, (slider_x + j_filled_w, j_slider_y), 18)
 
-                b_color = (255, 255, 100) if 2 == pause_selected_index else (200, 200, 200)
+                b_color = (255, 255, 100) if pause_selected_index == 2 else (255, 255, 255)
                 opt_surf = p_small.render("Back", True, b_color)
-                pause_overlay.blit(opt_surf, opt_surf.get_rect(center=(game_w // 2, game_h // 2 + 180)))
+                pause_overlay.blit(opt_surf, opt_surf.get_rect(center=(game_w // 2, game_h - 150)))
 
             game_surface.blit(pause_overlay, (0, 0))
 
@@ -885,7 +885,7 @@ class Name_Textures: # class to generate and store textures of user names
 
     def get_texture(self, name):
         if not name in self.name_textures:
-            font = pygame.font.SysFont('Comic Sans MS', 20)
+            font = pygame.font.SysFont('Comic Sans MS', 24, bold=True)
             name_texture = font.render(name, False, (255,255,255))
             self.name_textures[name] = name_texture
         return self.name_textures[name]
